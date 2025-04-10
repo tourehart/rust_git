@@ -1,3 +1,6 @@
-fn main() {
-    println!("Hello, world!");
+mod cli;
+mod commands;
+
+fn main(){
+    cli::command::git_execute();
 }
