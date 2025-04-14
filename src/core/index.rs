@@ -1,3 +1,6 @@
+use std::{collections::HashSet, path::Path};
+use crate::utils::fs;
+
 // 索引结构体定义
 pub struct Index {
     repo_path: String, 
@@ -8,32 +11,45 @@ impl Index {
     /// 加载现有索引
     pub fn load(repo_path: &str) -> Self {
         let index_file = format!("{}/.git/index", repo_path);
-        // 读取逻辑伪代码：
-        if 索引文件存在 {
-            将文件内容解析为文件路径集合
-        } else {
-            初始化空集合
-        }
 
-        Index { 
-            //返回初始化后的实例
+        let staged_files = if Path::new(&index_file).exists() {
+            let content = fs::read(index_file);
+            let mut set = HashSet::new();
+            for line in content.lines() {
+                set.insert(line.to_string());
+            }
+            set
+        } else {
+            HashSet::new()
+        };
+
+        Index {
+            repo_path: repo_path.to_string(),
+            staged_files
         }
     }
 
     /// 添加文件到暂存区
     pub fn stage_file(&mut self, path: &str) {
-        // 核心操作：
+        self.staged_files.insert(path.to_string());
+        self.persist();
     }
     
     /// 从暂存区移除文件
     pub fn unstage_file(&mut self, path: &str) {
-        // 核心操作：
+        self.staged_files.remove(path);
+        self.persist();
     }
 
     /// 内部保存方法
-    fn persist(&self) {
-        // 存储格式：
-        // 关联的仓库路径
+    pub fn persist(&self) {
+        let index_file = format!("{}/.git/index", self.repo_path);
+        let content = self.staged_files.iter().cloned().collect::<Vec<String>>().join("\n");
+        fs::write(index_file, content);
+    }
+
+    pub fn get_staged_files(&self) -> Vec<String> {
+        self.staged_files.iter().cloned().collect()
     }
 }
    

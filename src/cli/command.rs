@@ -1,4 +1,4 @@
-
+use std::env;
 use crate::cli::args::git_parse_args; // 引入命令行参数解析模块
 use crate::commands::init::git_init; 
 use crate::commands::add::git_add;
@@ -14,7 +14,10 @@ use crate::commands::push::git_push;
 pub fn git_execute(){
     // 解析命令行参数
     let matches = git_parse_args();
-
+    
+    let binding = env::current_dir().expect("fail to get repo path");
+    let repo_path = binding.to_str().expect("fail to trans to str");
+    
     match matches.subcommand() {
         Some(("add", sub_matches)) => {
             let files: Vec<&str> = sub_matches
@@ -22,7 +25,7 @@ pub fn git_execute(){
                .unwrap_or_default()
                .map(|s| s.as_str())
                .collect();
-            git_add();
+            git_add(repo_path,files);
         }
         Some(("branch", sub_matches)) => {
             let branch_name = sub_matches.get_one::<String>("branch_name").unwrap();
@@ -35,7 +38,7 @@ pub fn git_execute(){
         }
         Some(("commit", sub_matches)) => {
             let message = sub_matches.get_one::<String>("message").unwrap();
-            git_commit();
+            git_commit(repo_path,&message);
         }
         Some(("fetch", sub_matches)) => {
             let remote_url = sub_matches.get_one::<String>("remote_url").unwrap();
@@ -43,7 +46,7 @@ pub fn git_execute(){
         }
         Some(("init",sub_matches)) => {
             let init_dir = sub_matches.get_one::<String>("init_dir").unwrap();
-            git_init(init_dir);
+            git_init(repo_path,init_dir);
         }
         Some(("merge", sub_matches)) => {
             let branch_name = sub_matches.get_one::<String>("branch_name").unwrap();
@@ -58,9 +61,13 @@ pub fn git_execute(){
             git_push();
         }
         Some(("rm", sub_matches)) => {
-            let file = sub_matches.get_one::<String>("file").unwrap();
+            let files: Vec<&str> = sub_matches
+               .get_many::<String>("file")
+               .unwrap_or_default()
+               .map(|s| s.as_str())
+               .collect();
             let force = sub_matches.get_flag("force");
-            git_remove();
+            git_remove(repo_path,files,force);
         }
         _ => {}
     }

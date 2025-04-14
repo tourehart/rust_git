@@ -20,11 +20,12 @@ impl Reference {
     /// 解析引用内容
     pub fn resolve(repo_path: &str, ref_name: &str) -> Option<String> {
         // 实现逻辑：
-        if 引用文件存在 {
-            //读取文件内容并去除空白字符
-            Some(哈希字符串)
-        } else {
-            None
-        }
+        // if 引用文件存在 {
+        //     //读取文件内容并去除空白字符
+        //     Some(哈希字符串)
+        // } else {
+        //     None
+        // }
+        None
     }
  }

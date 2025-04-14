@@ -1,3 +1,7 @@
+use crate::utils::fs::create_dir;
+use crate::utils::fs::write;
+use crate::utils::hash;
+use crate::utils::fs;
 // 核心对象类型枚举
 pub enum Object {
     Commit(String), // 提交对象：存储提交信息
@@ -17,13 +21,14 @@ impl Object {
         };
 
         // 2. 计算SHA1哈希值
-        let hash = sha1(raw_data);
+        let hash = hash::sha1(&raw_data);
 
         // 3. 存储到objects目录
-        let dir = format!("{}/.git/objects/{}", repo_path,  &hash[0..2]);
-        create_dir(dir);
-        write_file(format!("{}/{}", dir, &hash[2..]), raw_data);
-
+        let dir = format!("{}/.git/objects", repo_path);
+        create_dir(&dir,&hash[0..2]);
+        write(format!("{}/{}", dir, &hash[2..]),raw_data);
         hash // 返回对象哈希
    }
+
+   
 }
