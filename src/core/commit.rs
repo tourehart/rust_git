@@ -1,3 +1,5 @@
+use chrono::Utc;
+
 use super::object::Object;
 
 
@@ -15,7 +17,6 @@ impl CommitBuilder {
     ) -> String { // 返回新提交的哈希
         // 1. 构造提交内容：
         // let timestamp = 获取当前RFC2822格式时间;
-        let commit_content = "".to_string();
         // let commit_content = 格式化字符串包含：
         // - tree [树哈希]
         // - parent [父提交哈希]（可选）
@@ -23,6 +24,16 @@ impl CommitBuilder {
         // - 空行
         // - [提交信息]
         // 2. 存储为Git对象
+
+        let timestamp = Utc::now().to_rfc2822();
+        let mut commit_content = format!("tree {}\n", tree_hash);
+        if let Some(parent) = parent_commit {
+            commit_content.push_str(&format!("parent {}\n", parent));
+        }
+        commit_content.push_str(&format!("author {} {}\n", author_info, timestamp));
+        commit_content.push('\n');
+        commit_content.push_str(&commit_message);
+        
         let commit_obj = Object::Commit(commit_content);
         commit_obj.save(repo_path) // 返回对象哈希
     }

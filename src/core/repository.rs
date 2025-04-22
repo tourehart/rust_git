@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use crate::utils::fs::{self, combine_paths, create_dir, create_file};
+use crate::utils::fs::{self, combine_paths, create_dir, create_file,write};
 
 // 仓库结构体，用于存储仓库路径
 pub struct Repository {
@@ -17,11 +17,13 @@ impl Repository {
         create_dir(&repo_path,".git");
         // 创建.git/refs目录
         create_dir(&repo_path,".git/refs");
+        create_dir(&repo_path,".git/refs/heads");
+        create_dir(&repo_path,".git/refs/tags");
         // 创建.git/objects目录
         create_dir(&repo_path,".git/objects");
         // 创建.git/HEAD文件
         create_file(&repo_path,".git/HEAD");
-
+        write(combine_paths(&repo_path, ".git/HEAD"),"ref: refs/heads/main".to_string());
         Repository {
             path: repo_path,
         }

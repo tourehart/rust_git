@@ -30,11 +30,11 @@ pub fn git_execute(){
         Some(("branch", sub_matches)) => {
             let branch_name = sub_matches.get_one::<String>("branch_name").unwrap();
             let delete = sub_matches.get_flag("delete");
-            git_branch();
+            git_branch(repo_path,&branch_name,delete);
         }
         Some(("checkout", sub_matches)) => {
             let target = sub_matches.get_one::<String>("target").unwrap();
-            git_checkout();
+            git_checkout(repo_path,&target);
         }
         Some(("commit", sub_matches)) => {
             let message = sub_matches.get_one::<String>("message").unwrap();
@@ -50,7 +50,7 @@ pub fn git_execute(){
         }
         Some(("merge", sub_matches)) => {
             let branch_name = sub_matches.get_one::<String>("branch_name").unwrap();
-            git_merge();
+            git_merge(repo_path,&branch_name);
         }
         Some(("pull", sub_matches)) => {
             let remote_url = sub_matches.get_one::<String>("remote_url").unwrap();

@@ -15,9 +15,9 @@ impl Object {
    pub fn save(&self, repo_path: &str) -> String {
     // 1. 序列化对象数据
         let raw_data = match self {
-            Object::Commit(data) => format!("commit {}\0{}", data.len(), data),
-            Object::Tree(data) => format!("tree {}\0{}", data.len(), data),
-            Object::Blob(data) => format!("blob {}\0{}",data.len(), data),
+            Object::Commit(data) => format!("commit {}\n{}", data.len(), data),
+            Object::Tree(data) => format!("tree {}\n{}", data.len(), data),
+            Object::Blob(data) => format!("blob {}\n{}",data.len(), data),
         };
 
         // 2. 计算SHA1哈希值
@@ -26,9 +26,9 @@ impl Object {
         // 3. 存储到objects目录
         let dir = format!("{}/.git/objects", repo_path);
         create_dir(&dir,&hash[0..2]);
-        write(format!("{}/{}", dir, &hash[2..]),raw_data);
+        write(format!("{}/{}/{}", dir, &hash[0..2], &hash[2..]),raw_data);
         hash // 返回对象哈希
    }
-
+   
    
 }

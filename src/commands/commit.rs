@@ -1,24 +1,26 @@
 use crate::core::repository::Repository;
 use crate::core::index::Index;
-use crate::core::tree::TreeProcessor;
+use crate::core::tree::Tree;
+use crate::core::commit::CommitBuilder;
+use crate::core::reference::Reference;
+use crate::utils::fs::{self, combine_paths};
 pub fn git_commit(repo_path: &str, commit_message: &str ) {
-    //提交成功的消息，包含提交的哈希值。
-
     // 1. 初始化仓库对象
     if !Repository::is_git_repo(repo_path){
-        let repo = Repository::init(repo_path,".");
+        let _repo = Repository::init(repo_path,".");
     }
         // 2. 加载当前索引
-    let mut staging_index = Index::load(repo_path);
+    let staging_index = Index::load(repo_path);
         // 3. 创建树对象哈希
-    let tree_hash = TreeProcessor::create_tree(repo_path, staging_index.get_staged_files());
+    let tree_hash = Tree::create_tree(repo_path, &staging_index.get_staged_files());
         // 4. 获取当前分支的最新提交
-    let parent_commit = 获取当前分支提交(repo_path, "master");
+   let ref_name = &Reference::get_current_ref(repo_path);
+    let parent_commit = Reference::resolve(repo_path, ref_name);
         // 5. 创建新的提交对象
-    let commit_hash = 创建提交(repo_path, tree_hash, parent_commit, "Author Name".to_string(), commit_message.to_string());
+    let commit_hash = CommitBuilder::create_commit(repo_path, tree_hash, parent_commit, "Author Name".to_string(), commit_message.to_string());
         // 6. 更新当前分支的引用，指向新的提交
-        //更新分支引用(repo_path, "master", &commit_hash);
+    Reference::update_commit(repo_path, &commit_hash, ref_name);
         // 7. 输出提交信息
     //打印"Committed changes: [commit_hash]";
-
+    println!("Committed changes: [{}]",commit_hash);
 }

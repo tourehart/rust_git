@@ -1,10 +1,10 @@
-use std::{collections::HashSet, path::Path};
+use std::{collections::HashMap, path::Path};
 use crate::utils::fs;
 
 // 索引结构体定义
 pub struct Index {
     repo_path: String, 
-   staged_files: HashSet<String> // 暂存文件集合
+   staged_files: HashMap<String, String> // 暂存文件集合
 }
 
 impl Index {
@@ -13,14 +13,15 @@ impl Index {
         let index_file = format!("{}/.git/index", repo_path);
 
         let staged_files = if Path::new(&index_file).exists() {
-            let content = fs::read(index_file);
-            let mut set = HashSet::new();
-            for line in content.lines() {
-                set.insert(line.to_string());
+            let content = fs::read_index(index_file);
+            let mut set = HashMap::new();
+            for line in content {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                set.insert(parts[2].to_string(),parts[2].to_string());
             }
             set
         } else {
-            HashSet::new()
+            HashMap::new()
         };
 
         Index {
@@ -30,8 +31,8 @@ impl Index {
     }
 
     /// 添加文件到暂存区
-    pub fn stage_file(&mut self, path: &str) {
-        self.staged_files.insert(path.to_string());
+    pub fn stage_file(&mut self, path: &str, hash: String) {
+        self.staged_files.insert(hash,path.to_string());
         self.persist();
     }
     
@@ -44,12 +45,14 @@ impl Index {
     /// 内部保存方法
     pub fn persist(&self) {
         let index_file = format!("{}/.git/index", self.repo_path);
-        let content = self.staged_files.iter().cloned().collect::<Vec<String>>().join("\n");
+        let content = self.staged_files.iter()
+        .map(|(key, value)| format!("blob {} {}\n", value, key))
+        .collect::<String>();
         fs::write(index_file, content);
     }
 
-    pub fn get_staged_files(&self) -> Vec<String> {
-        self.staged_files.iter().cloned().collect()
+    pub fn get_staged_files(&self) -> HashMap<String, String> {
+        self.staged_files.clone()
     }
 }
    
