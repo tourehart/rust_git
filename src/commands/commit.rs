@@ -14,12 +14,11 @@ pub fn git_commit(repo_path: &str, commit_message: &str ) {
         // 3. 创建树对象哈希
     let tree_hash = Tree::create_tree(repo_path, &staging_index.get_staged_files());
         // 4. 获取当前分支的最新提交
-   let ref_name = &Reference::get_current_ref(repo_path);
-    let parent_commit = Reference::resolve(repo_path, ref_name);
+    let parent_commit = Reference::get_current_hash(repo_path);
         // 5. 创建新的提交对象
     let commit_hash = CommitBuilder::create_commit(repo_path, tree_hash, parent_commit, "Author Name".to_string(), commit_message.to_string());
         // 6. 更新当前分支的引用，指向新的提交
-    Reference::update_commit(repo_path, &commit_hash, ref_name);
+    Reference::update_commit(repo_path, &commit_hash);
         // 7. 输出提交信息
     //打印"Committed changes: [commit_hash]";
     println!("Committed changes: [{}]",commit_hash);

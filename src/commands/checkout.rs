@@ -5,11 +5,21 @@ pub fn git_checkout(
     target: &str
 ) {
    // 1. 解析目标，检查是否为分支或提交哈希
-   let target_hash = match Reference::resolve(repo_path, target) {
-        Some(hash) => hash, 
-        // 如果是分支，获取对应的提交哈希
-        None => target.to_string(), // 如果是提交哈希，直接使用
-   };
+   let mut target_hash = Reference::resolve(repo_path, target);
+   if target_hash == "".to_string(){
+        target_hash = target.to_string();
+        Reference::change_head(repo_path, &target_hash);
+   }
+   else {
+        let ref_name = target;
+        let ref_type = if ref_name.starts_with("refs/heads/") || ref_name.starts_with("refs/tags/") {
+            ref_name.split('/').nth(1).unwrap()
+        } else {
+            "heads" // 默认使用heads
+        };
+        let content = format!("ref: refs/{}/{}",ref_type, ref_name.split('/').last().unwrap());
+        Reference::change_head(repo_path, &content);
+   }
     // 2. 更新 HEAD 指向目标（分支或提交哈希）
    Reference::update_head(repo_path, &target_hash);
     // 3. 用户反馈
