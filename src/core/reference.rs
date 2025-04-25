@@ -1,5 +1,9 @@
-use crate::utils::fs::{combine_paths, delete_file, if_file_exist, read, write};
+use std::collections::HashMap;
 
+use crate::utils::fs::{self, collect_files, combine_paths, create_dir, delete_file, delete_files, if_file_exist, read, write};
+
+use super::object::Object;
+use super::tree::{self, read_tree, restore_tree};
 
 pub struct Reference;
 
@@ -88,8 +92,13 @@ impl Reference {
         }
     }
 
-    pub fn update_head(repo_path: &str, target_hash: &str){
-
+    pub fn get_root_hash(repo_path: &str, commit_hash: &str)->String{
+        let commit_path = format!("{}/.git/objects/{}/{}", repo_path, &commit_hash[0..2], &commit_hash[2..]);
+        let binding = read(commit_path);
+        let part: Vec<&str> = binding.split('\n').collect();
+        let binding = part[0].to_string();
+        let tree: Vec<&str> = binding.split(' ').collect();
+        tree[1].to_string()
     }
 
     pub fn is_detached_head(repo_path: &str) -> bool {
@@ -102,5 +111,66 @@ impl Reference {
         else{
             false
         }
+    }
+
+    pub fn restore_workspace(repo_path: &str, root_tree_hash: &str) {
+        // 记录当前工作区的所有文件
+        let mut current_files = HashMap::new();
+        collect_files(repo_path, "", &mut current_files);
+
+        // 递归遍历树对象
+        let tree_content = read_tree(repo_path, root_tree_hash);
+        restore_tree(repo_path, "", &tree_content, &mut current_files);
+
+        // 删除多余的文件
+        delete_files(repo_path,&mut current_files);
+    }
+
+    pub fn find_common_ancestor(repo_path: &str, commit_hash1: &str, commit_hash2: &str) -> Option<String> {
+        let mut ancestors1 = Self::get_all_ancestors(repo_path, commit_hash1);
+        let ancestors2 = Self::get_all_ancestors(repo_path, commit_hash2);
+
+        for ancestor in ancestors2 {
+            if ancestors1.contains(&ancestor) {
+                return Some(ancestor);
+            }
+        }
+        None
+    }
+
+    /// 获取一个提交哈希的所有祖先提交哈希
+    fn get_all_ancestors(repo_path: &str, commit_hash: &str) -> Vec<String> {
+        let mut ancestors = Vec::new();
+        let mut current_commit = commit_hash.to_string();
+
+        loop {
+            let commit_obj = Self::resolve(repo_path, &current_commit);
+            let parents = Self::parse_parents(&commit_obj);
+
+            if parents.is_empty() {
+                break;
+            }
+
+            for parent in parents {
+                ancestors.push(parent.clone());
+                current_commit = parent;
+            }
+        }
+
+        ancestors
+    }
+
+    /// 从提交对象中解析出父提交哈希
+    fn parse_parents(commit_obj: &str) -> Vec<String> {
+        let mut parents = Vec::new();
+        for line in commit_obj.lines() {
+            if line.starts_with("parent") {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                if parts.len() == 2 {
+                    parents.push(parts[1].to_string());
+                }
+            }
+        }
+        parents
     }
  }

@@ -20,8 +20,8 @@ pub fn git_checkout(
         let content = format!("ref: refs/{}/{}",ref_type, ref_name.split('/').last().unwrap());
         Reference::change_head(repo_path, &content);
    }
-    // 2. 更新 HEAD 指向目标（分支或提交哈希）
-   Reference::update_head(repo_path, &target_hash);
+   let root_tree_hash = Reference::get_root_hash(repo_path,&target_hash);
+   Reference::restore_workspace(repo_path,&root_tree_hash);
     // 3. 用户反馈
    println!("Switched to branch or commit [{}]",target);
 }

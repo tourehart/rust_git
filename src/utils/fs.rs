@@ -1,4 +1,4 @@
-use std::{fs::{self, File}, io::{BufRead, BufReader, Read, Write}, path::{Path, PathBuf}};
+use std::{collections::HashMap, fs::{self, File}, io::{BufRead, BufReader, Read, Write}, path::{Path, PathBuf}};
 
 
 pub fn create_dir(path: &str,dir:&str){
@@ -62,4 +62,32 @@ pub fn read_index(file:String)-> Vec<String>{
     //     }
     // }
     // content
+}
+
+pub fn collect_files(repo_path: &str, base_path: &str, files: &mut HashMap<String, ()>) {
+    let full_path = Path::new(repo_path).join(base_path);
+    if full_path.is_dir() {
+        for entry in fs::read_dir(full_path).unwrap() {
+            let entry = entry.unwrap();
+            let path = entry.path();
+            let relative_path = path.strip_prefix(repo_path).unwrap().to_str().unwrap().to_string();
+            if path.is_file() {
+                files.insert(relative_path, ());
+            } else if path.is_dir() {
+               collect_files(repo_path, &relative_path, files);
+            }
+        }
+    }
+}
+pub fn delete_files(repo_path: &str,  files: &mut HashMap<String, ()>) {
+    for (path, _) in files {
+        let full_path = Path::new(repo_path).join(path);
+        if full_path.exists() {
+            if full_path.is_file() {
+                fs::remove_file(full_path).unwrap();
+            } else if full_path.is_dir() {
+                fs::remove_dir_all(full_path).unwrap();
+            }
+        }
+    }
 }
